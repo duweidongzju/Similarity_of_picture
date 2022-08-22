@@ -6,9 +6,6 @@
 # @Software: PyCharm
 
 import os
-import glob
-import cv2
-import sys
 import shutil
 
 import numpy as np
@@ -19,39 +16,52 @@ from joblib import Parallel
 from Tool import *
 
 
-def run(url):
-    global failed_urls
+def run(params):
+    picture_id, url = params
 
-    suffix = url.split('.')[-1].split('?')[0]
-    save_path = os.path.join(save_root, suffix)
+    save_path = os.path.join(save_root, picture_id)
     os.makedirs(save_path, exist_ok=True)
     try:
         cmd = f"you-get -o {save_path} {url}"
         os.system(cmd)
     except:
-        failed_urls.append([url])
+        pass
+
+    if len(os.listdir(save_path)) == 0:
+        shutil.rmtree(save_path)
 
 
-Gallery819 = 'files/819Gallery.xlsx'
-save_root = 'data'
+def run2(params):
+    picture_id, url = params
+    save_path = os.path.join(save_root, picture_id)
+    os.makedirs(save_path, exist_ok=True)
+    try:
+        cmd = f"wget -P {save_path} {url}"
+        os.system(cmd)
+    except:
+        print('failed download')
+    if len(os.listdir(save_path)) == 0:
+        shutil.rmtree(save_path)
 
-txt = os.path.join(save_root, 'failed_log.txt')
 
-urls = []
-if os.path.exists(txt):
-    with open(txt, 'r', encoding='utf-8') as f:
-        for line in f.readlines():
-            urls.append(line.strip())
-else:
-    pd_excel = pd.read_excel(Gallery819)
-    # 如果有多个sheet, 可以指定sheet name
-    # pd_excel = pandas.read_excel(excel_name， sheet_name='student')
-    table1 = pd_excel.values
+save_root = '/mnt/dl-storage/dg-cephfs-0/public/Ambilight/Xsidu2'
+os.makedirs(save_root, exist_ok=True)
 
-    for i, line in enumerate(table1.tolist()):
-        _, _, url = line
-        urls.append(url)
 
-failed_urls = []
-Parallel(n_jobs=5)(delayed(run)(url) for url in urls[:40])
-write_txt(txt)
+def get_download_urls():
+    urls = []
+    downloaded_picture_ids = []
+    for downloaded_picture_id in os.listdir(save_root):
+        if len(os.listdir(os.path.join(save_root, downloaded_picture_id))) == 0:
+            continue
+        downloaded_picture_ids.append(downloaded_picture_id)
+
+    for picture_id, url in read_txt("files/id_urls"):
+        if picture_id not in downloaded_picture_ids:
+            urls.append([picture_id, url])
+    return urls
+
+
+urls = get_download_urls()
+
+Parallel(n_jobs=50)(delayed(run)(url) for url in urls)
