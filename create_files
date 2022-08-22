@@ -1,0 +1,28 @@
+#!C:\pythonCode
+# -*- coding: utf-8 -*-
+# @Time : 2022/8/19 15:55
+# @Author : duweidong
+# @File : run.py
+# @Software: PyCharm
+
+import os
+
+import numpy as np
+import pandas as pd
+
+from joblib import delayed
+from joblib import Parallel
+from Tool import *
+
+
+Gallery819 = 'files/819Gallery.xlsx'
+pd_excel = pd.read_excel(Gallery819)
+# 如果有多个sheet, 可以指定sheet name
+# pd_excel = pandas.read_excel(excel_name， sheet_name='student')
+table1 = pd_excel.values
+urls = []
+for i, line in enumerate(table1.tolist()):
+    _, _, url = line
+    urls.append([str(i).zfill(6), url])
+
+write_txt("files/id_urls", urls)
